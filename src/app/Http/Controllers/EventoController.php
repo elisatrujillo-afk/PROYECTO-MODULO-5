@@ -4,46 +4,151 @@ namespace App\Http\Controllers;
 
 use App\Models\Evento;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Validator;
 
 class EventoController extends Controller
 {
     /**
-     * Display a listing of the resource.
+     * Mostrar una lista del recurso.
      */
     public function index()
     {
-        //
+        $eventos = Evento::all();
+        $respuesta = [
+            'eventos' => $eventos,
+            'status' => 200,
+        ];
+        return response()->json($respuesta);
     }
 
     /**
-     * Store a newly created resource in storage.
+     * Almacenar un recurso recién creado en el almacenamiento.
      */
     public function store(Request $request)
     {
-        //
+        $validator = Validator::make($request->all(), [
+            'titulo' => 'required',
+            'descripcion' => 'required',
+            'fecha_inicio' => 'required|date',
+            'fecha_fin' => 'required|date',
+            'ubicacion' => 'required',
+        ]);
+
+        if ($validator->fails()) {
+            $respuesta = [
+                'message' => 'Datos faltantes',
+                'status' => 400, // Petición inválida
+            ];
+            return response()->json($respuesta, 400);
+        }
+
+        $evento = Evento::create([
+            'titulo' => $request->titulo,
+            'descripcion' => $request->descripcion,
+            'fecha_inicio' => $request->fecha_inicio,
+            'fecha_fin' => $request->fecha_fin,
+            'ubicacion' => $request->ubicacion,
+        ]);
+
+        if (!$evento) {
+            $respuesta = [
+                'message' => 'Error al crear el evento',
+                'status' => 500, // Error interno del servidor
+            ];
+            return response()->json($respuesta, 500);
+        }
+
+        $respuesta = [
+            'evento' => $evento,
+            'status' => 201,
+        ];
+        return response()->json($respuesta, 201);
     }
 
     /**
-     * Display the specified resource.
+     * Mostrar el recurso especificado.
      */
-    public function show(Evento $evento)
+    public function show($id)
     {
-        //
+        $evento = Evento::find($id);
+
+        if (!$evento) {
+            $respuesta = [
+                'message' => 'Evento no encontrado',
+                'status' => 404, // No encontrado
+            ];
+            return response()->json($respuesta, 404);
+        }
+
+        $respuesta = [
+            'evento' => $evento,
+            'status' => 200, // OK
+        ];
+        return response()->json($respuesta);
     }
 
     /**
-     * Update the specified resource in storage.
+     * Actualizar el recurso especificado en el almacenamiento.
      */
-    public function update(Request $request, Evento $evento)
+    public function update(Request $request, $id)
     {
-        //
+        $evento = Evento::find($id);
+
+        if (!$evento) {
+            $respuesta = [
+                'message' => 'Evento no encontrado',
+                'status' => 404, // No encontrado
+            ];
+            return response()->json($respuesta, 404);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'titulo' => 'required',
+            'descripcion' => 'required',
+            'fecha_inicio' => 'required|date',
+            'fecha_fin' => 'required|date',
+            'ubicacion' => 'required',
+        ]);
+
+        if ($validator->fails()) {
+            $respuesta = [
+                'message' => 'Datos faltantes',
+                'status' => 400, // Petición inválida
+            ];
+            return response()->json($respuesta, 400);
+        }
+
+        $evento->titulo = $request->titulo;
+        $evento->descripcion = $request->descripcion;
+        $evento->fecha_inicio = $request->fecha_inicio;
+        $evento->fecha_fin = $request->fecha_fin;
+        $evento->ubicacion = $request->ubicacion;
+        $evento->save();
+
+        $respuesta = [
+            'evento' => $evento,
+            'status' => 200, // OK
+        ];
+        return response()->json($respuesta);
     }
 
     /**
-     * Remove the specified resource from storage.
+     * Eliminar el recurso especificado del almacenamiento.
      */
-    public function destroy(Evento $evento)
+    public function destroy($id)
     {
-        //
+        $evento = Evento::find($id);
+
+        if (!$evento) {
+            $respuesta = [
+                'message' => 'Evento no encontrado',
+                'status' => 404, // No encontrado
+            ];
+            return response()->json($respuesta, 404);
+        }
+
+        $evento->delete();
+        return response()->json(['status' => 200]);
     }
 }
+ 
